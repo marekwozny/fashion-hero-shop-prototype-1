@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useContext, useState, useCallback, useEffect } from "react";
+import posthog from "posthog-js";
 
 interface WishlistContextType {
   wishlistItems: string[];
@@ -45,10 +46,15 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
 
   const toggleWishlist = useCallback((productId: string) => {
     setWishlistItems((prev) => {
-      const next = prev.includes(productId)
-        ? prev.filter((id) => id !== productId)
-        : [...prev, productId];
+      const isAdding = !prev.includes(productId);
+      const next = isAdding
+        ? [...prev, productId]
+        : prev.filter((id) => id !== productId);
       saveWishlist(next);
+      posthog.capture("product_wishlisted", {
+        product_id: productId,
+        action: isAdding ? "added" : "removed",
+      });
       return next;
     });
   }, []);

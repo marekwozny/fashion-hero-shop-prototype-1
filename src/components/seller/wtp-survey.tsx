@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import posthog from "posthog-js"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
@@ -33,7 +34,14 @@ export function WtpSurvey({ onClose }: WtpSurveyProps) {
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (validate()) setSubmitted(true)
+    if (validate()) {
+      posthog.capture("wtp_survey_submitted", {
+        price: form.price,
+        priority: form.priority,
+        email: form.email,
+      });
+      setSubmitted(true)
+    }
   }
 
   if (submitted) {

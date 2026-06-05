@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useMemo } from "react";
 import Link from "next/link";
+import posthog from "posthog-js";
 import { CloseIcon, SearchIcon } from "./icons";
 import { products } from "@/data/products";
 
@@ -16,6 +17,7 @@ function productGradient(hex: string): string {
 
 export function SearchModal({ isOpen, onClose }: SearchModalProps) {
   const [query, setQuery] = useState("");
+  const [lastTrackedQuery, setLastTrackedQuery] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
 
   const results = useMemo(() => {
@@ -23,6 +25,27 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
     const q = query.toLowerCase();
     return products.filter((p) => p.name.toLowerCase().includes(q)).slice(0, 6);
   }, [query]);
+
+  function handleQueryChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const val = e.target.value;
+    setQuery(val);
+    if (val.trim().length >= 3 && val.trim() !== lastTrackedQuery) {
+      setLastTrackedQuery(val.trim());
+      posthog.capture("search_performed", {
+        query: val.trim(),
+        results_count: results.length,
+      });
+    }
+  }
+
+  function handleResultClick(productSlug: string, productName: string) {
+    posthog.capture("search_result_clicked", {
+      query: query.trim(),
+      product_slug: productSlug,
+      product_name: productName,
+    });
+    onClose();
+  }
 
   useEffect(() => {
     if (isOpen) {
@@ -64,7 +87,7 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
               ref={inputRef}
               type="text"
               value={query}
-              onChange={(e) => setQuery(e.target.value)}
+              onChange={handleQueryChange}
               placeholder="Search for shoes..."
               className="flex-1 text-base text-charcoal placeholder:text-warm-gray outline-none bg-transparent"
             />
@@ -86,7 +109,7 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
                       <Link
                         key={product.id}
                         href={`/products/${product.slug}`}
-                        onClick={onClose}
+                        onClick={() => handleResultClick(product.slug, product.name)}
                         className="flex items-center gap-4 p-2 rounded hover:bg-cream transition-colors"
                       >
                         <div

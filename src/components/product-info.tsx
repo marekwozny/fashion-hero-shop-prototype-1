@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
+import posthog from "posthog-js";
 import type { Product, ProductColor } from "@/types";
 import { StarIcon } from "@/components/icons";
 import { ColorSwatches } from "@/components/color-swatches";
@@ -63,6 +64,17 @@ export function ProductInfo({ product }: ProductInfoProps) {
   const stock = useMemo(() => getStockInfo(product.id), [product.id]);
   const seller = getSellerById(product.sellerId);
   const deliveryDate = useMemo(() => getEstimatedDelivery(), []);
+
+  useEffect(() => {
+    posthog.capture("product_viewed", {
+      product_id: product.id,
+      product_name: product.name,
+      product_slug: product.slug,
+      price: product.price,
+      category: product.category,
+      seller_id: product.sellerId,
+    });
+  }, [product.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const collectionName = product.category === "men"
     ? "Men's Shoes"

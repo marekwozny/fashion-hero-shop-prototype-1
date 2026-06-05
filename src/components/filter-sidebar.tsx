@@ -1,5 +1,6 @@
 "use client";
 
+import posthog from "posthog-js";
 import { cn } from "@/lib/utils";
 import type { ShoeType, ShoeMaterial } from "@/types";
 import { getAllSellers } from "@/data/sellers";
@@ -138,35 +139,35 @@ export function FilterSidebar({
     ? allTypeOptions.filter((opt) => availableTypes.includes(opt.value))
     : allTypeOptions;
   function toggleShoeType(type: ShoeType) {
-    onShoeTypeChange(
-      shoeTypes.includes(type)
-        ? shoeTypes.filter((t) => t !== type)
-        : [...shoeTypes, type]
-    );
+    const next = shoeTypes.includes(type)
+      ? shoeTypes.filter((t) => t !== type)
+      : [...shoeTypes, type];
+    onShoeTypeChange(next);
+    posthog.capture("filter_applied", { filter_type: "product_type", value: type, active_values: next });
   }
 
   function toggleMaterial(mat: ShoeMaterial) {
-    onMaterialChange(
-      materials.includes(mat)
-        ? materials.filter((m) => m !== mat)
-        : [...materials, mat]
-    );
+    const next = materials.includes(mat)
+      ? materials.filter((m) => m !== mat)
+      : [...materials, mat];
+    onMaterialChange(next);
+    posthog.capture("filter_applied", { filter_type: "material", value: mat, active_values: next });
   }
 
   function toggleSize(size: number) {
-    onSizesChange(
-      sizes.includes(size)
-        ? sizes.filter((s) => s !== size)
-        : [...sizes, size]
-    );
+    const next = sizes.includes(size)
+      ? sizes.filter((s) => s !== size)
+      : [...sizes, size];
+    onSizesChange(next);
+    posthog.capture("filter_applied", { filter_type: "size", value: size, active_values: next });
   }
 
   function toggleSeller(slug: string) {
-    onSellerChange(
-      sellerSlugs.includes(slug)
-        ? sellerSlugs.filter((s) => s !== slug)
-        : [...sellerSlugs, slug]
-    );
+    const next = sellerSlugs.includes(slug)
+      ? sellerSlugs.filter((s) => s !== slug)
+      : [...sellerSlugs, slug];
+    onSellerChange(next);
+    posthog.capture("filter_applied", { filter_type: "seller", value: slug, active_values: next });
   }
 
   return (
@@ -194,7 +195,10 @@ export function FilterSidebar({
               key={g}
               checked={gender === g}
               label={g === "all" ? "All" : g === "men" ? "Men" : "Women"}
-              onChange={() => onGenderChange(g)}
+              onChange={() => {
+                onGenderChange(g);
+                posthog.capture("filter_applied", { filter_type: "gender", value: g });
+              }}
             />
           ))}
         </div>
@@ -228,9 +232,11 @@ export function FilterSidebar({
               key={opt.value}
               checked={priceRange === opt.value}
               label={opt.label}
-              onChange={() =>
-                onPriceRangeChange(priceRange === opt.value ? "all" : opt.value)
-              }
+              onChange={() => {
+                const next = priceRange === opt.value ? "all" : opt.value;
+                onPriceRangeChange(next);
+                posthog.capture("filter_applied", { filter_type: "price", value: next });
+              }}
             />
           ))}
         </div>

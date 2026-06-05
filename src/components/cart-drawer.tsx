@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
+import posthog from "posthog-js";
 import { cn } from "@/lib/utils";
 import { CloseIcon, MinusIcon, PlusIcon } from "./icons";
 import type { CartItem } from "@/types";
@@ -159,7 +160,14 @@ export function CartDrawer({
             <Link
               href="/checkout"
               className="btn-cta w-full block text-center"
-              onClick={onClose}
+              onClick={() => {
+                posthog.capture("checkout_started", {
+                  item_count: items.length,
+                  total_items: items.reduce((s, i) => s + i.quantity, 0),
+                  subtotal,
+                });
+                onClose();
+              }}
             >
               CHECKOUT
             </Link>
